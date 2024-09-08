@@ -1,10 +1,8 @@
 import subprocess
-from pdf2image import convert_from_path
-from PIL import Image
 import tempfile
 import os
 import importlib
-templater = importlib.import_module('make-templates')
+import make_templates
 # \usepackage[margin=1.2in,paperheight=""" + str(ht) + r"""in]{{geometry}}"
 
 before_text = r"""\documentclass[11pt,preview,border=0.5in]{standalone}
@@ -20,23 +18,6 @@ before_text = r"""\documentclass[11pt,preview,border=0.5in]{standalone}
 after_text = r"""
 \end{document}"""
 
-def crop_whitespace(image):
-    gray_image = image.convert("L")
-    bbox = gray_image.getbbox()
-    if bbox:
-        return image.crop(bbox)
-    return image
-
-def pdf_to_images(pdf_file, output_folder):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    
-    images = convert_from_path(pdf_file)
-    for i, image in enumerate(images):
-        cropped_image = crop_whitespace(image)
-        image_path = os.path.join(output_folder, f'page_{i + 1}.jpg')
-        cropped_image.save(image_path, 'jpg')
-
 def latex_to_images(assignment, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -47,7 +28,7 @@ def latex_to_images(assignment, output_folder):
             with open(os.path.join(temp_dir, 'cs170.sty'), 'w') as f2:
                 f2.write(f.read())
 
-        templater.generate(assignment, temp_dir)
+        make_templates.generate(assignment, temp_dir)
         questions = parse_questions(os.path.join(temp_dir, f'hw{assignment:02d}.tex'))
 
         for i, q in enumerate(questions, start=2):
@@ -60,8 +41,6 @@ def latex_to_images(assignment, output_folder):
 
             pdf_file = os.path.join(temp_dir, os.path.basename(latex_file).replace('.tex', '.pdf'))
 
-            # pdf_to_images(pdf_file, output_folder)
-            # subprocess.run(['cp', pdf_file, output_folder])
             subprocess.run(['convert', '-density', '150', '-quality', '100', '-flatten', pdf_file, os.path.join(output_folder, f"hw{assignment:02d}", f'hw{assignment:02d}-img{i:02d}.png')])
 
 def parse_questions(tex_file):
