@@ -3,7 +3,6 @@ import tempfile
 import os
 import importlib
 import make_templates
-# \usepackage[margin=1.2in,paperheight=""" + str(ht) + r"""in]{{geometry}}"
 
 before_text = r"""\documentclass[11pt,preview,border=0.5in]{standalone}
 \usepackage{cs170}
