@@ -29,11 +29,13 @@ import os
 import datetime
 from dataclasses import dataclass
 from typing import Optional
+from bs4 import BeautifulSoup
 
 from edapi import EdAPI
 from edapi.constants import ThreadType
 from edapi.utils import new_document, parse_content
 from PIL import Image
+import ed_templates
 
 OVERLEAF_UPLOAD_URL = "https://www.overleaf.com/docs?snip_uri="
 ANSI_BLUE = lambda text: f"\u001b[34m{text}\u001b[0m"
@@ -45,23 +47,27 @@ class Config:
 
     course_id: int
     index_thread_num: Optional[int]
+    overleaf_url: Optional[str]
 
     def copy(self) -> "Config":
         """Make a copy of the current configuration."""
         return Config(course_id=self.course_id, index_thread_num=self.index_thread_num)
 
     @staticmethod
-    def from_json(obj: dict) -> "Config":
+    def from_json(obj: dict, id_field: str) -> "Config":
         """Convert a JSON object (dict) into a Config dataclass."""
-        assert "course_id" in obj, "config JSON must contain 'course_id' value"
+        assert id_field in obj, "config JSON must contain 'course_id' value"
 
         index_thread_num = obj.get("index_thread_num", None)
         if index_thread_num is not None:
             index_thread_num = int(index_thread_num)
 
+        overleaf_url = obj.get("overleaf_link", None)
+
         return Config(
-            course_id=int(obj["course_id"]),
+            course_id=int(obj[id_field]),
             index_thread_num=index_thread_num,
+            overleaf_url=overleaf_url
         )
 
     def as_json(self) -> dict:
@@ -69,6 +75,7 @@ class Config:
         return {
             "course_id": self.course_id,
             "index_thread_num": self.index_thread_num,
+            "overleaf_url": self.overleaf_url,
         }
 
 
@@ -169,7 +176,9 @@ def post_hw(ed: EdAPI, config: Config, hw_num: str):
     # print(f"\nGo to:\n\t{ANSI_BLUE(template_creation_url)}")
 
     # Release post
-    student_link = input("Enter shareable Overleaf link: ")
+    # student_link = input("Enter shareable Overleaf link: ")
+    student_link = config.overleaf_url
+    print("Shareable Overleaf link:", student_link)
 
     # create post body
     post_soup, document = new_document()
@@ -183,7 +192,7 @@ Homework {str(int(hw_num_fmt))} has been posted to the """
     pdf_link = post_soup.new_tag("link", href=f"https://cs170.org/assets/pdf/hw{hw_num}.pdf")
     pdf_link.string = "course website"
     main_paragraph.append(pdf_link)
-    main_paragraph.append(f""". It is due next on Friday ({next_friday.strftime(r"%m/%d")}) at 10:00pm, with a grace period until 11:59pm. Reminder that we have homework parties every Friday to help support you in completing the psets.
+    main_paragraph.append(f""". It is due next on Friday ({next_friday.strftime(r"%m/%d")}) at 10:00pm, with a grace period until 11:59pm.
 
 Any general questions about the homework should be posted in this thread, and questions about specific problems should be posted under the individual threads:
 """ )
@@ -207,6 +216,8 @@ Any general questions about the homework should be posted in this thread, and qu
     link_paragraph.append(link_link)
     document.append(link_paragraph)
 
+    print(document)
+
     # zip_paragraph = post_soup.new_tag("paragraph")
     # zip_paragraph.string = "Source files:"
     # document.append(zip_paragraph)
@@ -225,7 +236,7 @@ Any general questions about the homework should be posted in this thread, and qu
             "subcategory": f"HW{hw_num_fmt}",
             "subsubcategory": "",
             "content": str(document),
-            "is_pinned": False,
+            "is_pinned": True,
             "is_private": False,
             "is_anonymous": False,
             "is_megathread": True,
@@ -237,35 +248,35 @@ Any general questions about the homework should be posted in this thread, and qu
 
     # Update summary
 
-    # course_id = config.course_id
-    # hw_dis_post_num = config.index_thread_num
-    # hw_dis_post = ed.get_course_thread(course_id, hw_dis_post_num)
-    # hw_dis_post_id = hw_dis_post["id"]
+    course_id = config.course_id
+    hw_dis_post_num = config.index_thread_num
+    hw_dis_post = ed.get_course_thread(course_id, hw_dis_post_num)
+    hw_dis_post_id = hw_dis_post["id"]
 
-    # last_content = hw_dis_post["content"]
-    # soup, document = parse_content(last_content)
-    # # hw list is first, dis list is second
-    # # hw_list = document.find_all("list", recursive=False)[0]
+    last_content = hw_dis_post["content"]
+    soup, document = parse_content(last_content)
+    # hw list is first, dis list is second
+    hw_list = document.find_all("list", recursive=False)[0]
 
-    # hw_summary = soup.new_tag("list-item")
-    # hw_summary_heading = soup.new_tag("paragraph")
-    # hw_summary_heading.string = f"Homework {hw_num_fmt}"
-    # hw_summary.append(hw_summary_heading)
+    hw_summary = soup.new_tag("list-item")
+    hw_summary_heading = soup.new_tag("paragraph")
+    hw_summary_heading.string = f"Homework {hw_num_fmt}"
+    hw_summary.append(hw_summary_heading)
 
-    # question_list = soup.new_tag("list")
-    # question_list.attrs["style"] = "bullet"
-    # for question_content in summary:
-    #     question_item = soup.new_tag("list-item")
-    #     question_paragraph = soup.new_tag("paragraph")
-    #     question_paragraph.append(question_content)
-    #     question_item.append(question_paragraph)
-    #     question_list.append(question_item)
-    # hw_summary.append(question_list)
+    question_list = soup.new_tag("list")
+    question_list.attrs["style"] = "bullet"
+    for question_content in summary:
+        question_item = soup.new_tag("list-item")
+        question_paragraph = soup.new_tag("paragraph")
+        question_paragraph.append(question_content)
+        question_item.append(question_paragraph)
+        question_list.append(question_item)
+    hw_summary.append(question_list)
 
-    # hw_list.append(hw_summary)
+    hw_list.append(hw_summary)
 
-    # ed.edit_thread(hw_dis_post_id, {"content": str(document)})
-    # print("Updated Index Thread")
+    ed.edit_thread(hw_dis_post_id, {"content": str(document)})
+    print("Updated Index Thread")
 
 
 def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
@@ -278,38 +289,45 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
 
     # create post body
     discussion_soup, document = new_document()
-    dis_a_paragraph = discussion_soup.new_tag("paragraph")
-    dis_a_paragraph.string = f"Discussion {dis_num_fmt}a: "
-    dis_a_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}a.pdf"
-    dis_a_link = discussion_soup.new_tag("link", href=dis_a_text)
-    dis_a_link.string = dis_a_text
-    dis_a_paragraph.append(dis_a_link)
-    document.append(dis_a_paragraph)
+    template = ed_templates.DIS_TEMPLATE(dis_num_fmt)
+    for par in template:
+        dis_paragraph = par
+        document.append(dis_paragraph)
 
-    dis_b_paragraph = discussion_soup.new_tag("paragraph")
-    dis_b_paragraph.string = f"Discussion {dis_num_fmt}b: "
-    dis_b_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}b.pdf"
-    dis_b_link = discussion_soup.new_tag("link", href=dis_b_text)
-    dis_b_link.string = dis_b_text
-    dis_b_paragraph.append(dis_b_link)
-    document.append(dis_b_paragraph)
+    print(document)
+    # discussion_soup, document = new_document()
+    # dis_a_paragraph = discussion_soup.new_tag("paragraph")
+    # dis_a_paragraph.string = f"Discussion {dis_num_fmt}a: "
+    # dis_a_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}a.pdf"
+    # dis_a_link = discussion_soup.new_tag("link", href=dis_a_text)
+    # dis_a_link.string = dis_a_text
+    # dis_a_paragraph.append(dis_a_link)
+    # document.append(dis_a_paragraph)
 
-    if is_summer:
-        dis_c_paragraph = discussion_soup.new_tag("paragraph")
-        dis_c_paragraph.string = f"Discussion {dis_num_fmt}c: "
-        dis_c_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}c.pdf"
-        dis_c_link = discussion_soup.new_tag("link", href=dis_c_text)
-        dis_c_link.string = dis_c_text
-        dis_c_paragraph.append(dis_c_link)
-        document.append(dis_c_paragraph)
+    # dis_b_paragraph = discussion_soup.new_tag("paragraph")
+    # dis_b_paragraph.string = f"Discussion {dis_num_fmt}b: "
+    # dis_b_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}b.pdf"
+    # dis_b_link = discussion_soup.new_tag("link", href=dis_b_text)
+    # dis_b_link.string = dis_b_text
+    # dis_b_paragraph.append(dis_b_link)
+    # document.append(dis_b_paragraph)
 
-        dis_d_paragraph = discussion_soup.new_tag("paragraph")
-        dis_d_paragraph.string = f"Discussion {dis_num_fmt}d: "
-        dis_d_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}d.pdf"
-        dis_d_link = discussion_soup.new_tag("link", href=dis_d_text)
-        dis_d_link.string = dis_d_text
-        dis_d_paragraph.append(dis_d_link)
-        document.append(dis_d_paragraph)
+    # if is_summer:
+    #     dis_c_paragraph = discussion_soup.new_tag("paragraph")
+    #     dis_c_paragraph.string = f"Discussion {dis_num_fmt}c: "
+    #     dis_c_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}c.pdf"
+    #     dis_c_link = discussion_soup.new_tag("link", href=dis_c_text)
+    #     dis_c_link.string = dis_c_text
+    #     dis_c_paragraph.append(dis_c_link)
+    #     document.append(dis_c_paragraph)
+
+    #     dis_d_paragraph = discussion_soup.new_tag("paragraph")
+    #     dis_d_paragraph.string = f"Discussion {dis_num_fmt}d: "
+    #     dis_d_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}d.pdf"
+    #     dis_d_link = discussion_soup.new_tag("link", href=dis_d_text)
+    #     dis_d_link.string = dis_d_text
+    #     dis_d_paragraph.append(dis_d_link)
+    #     document.append(dis_d_paragraph)
 
     # post thread
     dis_post_result = ed.post_thread(
@@ -318,7 +336,7 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
             "type": ThreadType.POST,
             "title": f"Discussion {dis_num_fmt} Thread",
             "category": "Discussion",
-            "subcategory": f"DIS{dis_num_fmt}",
+            "subcategory": "",
             "subsubcategory": "",
             "content": str(document),
             "is_pinned": False,
@@ -328,10 +346,11 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
             "anonymous_comments": True,
         },
     )
-    if is_summer:
-        print(f"Posted discussion {dis_num_fmt}a/b/c/d: #{dis_post_result['number']}")
-    else:
-        print(f"Posted discussion {dis_num_fmt}a/b: #{dis_post_result['number']}")
+    print(f"Posted discussion {dis_num_fmt}: #{dis_post_result['number']}")
+    # if is_summer:
+    #     print(f"Posted discussion {dis_num_fmt}a/b/c/d: #{dis_post_result['number']}")
+    # else:
+    #     print(f"Posted discussion {dis_num_fmt}a/b: #{dis_post_result['number']}")
 
     # update summary
     hw_dis_post_num = config.index_thread_num
@@ -489,7 +508,7 @@ def main(args):
     # read configuration
     with open("./config.json", "r", encoding="utf-8") as config_file:
         config_json = json.load(config_file)
-        config = Config.from_json(config_json)
+        config = Config.from_json(config_json, args.id_field)
 
     ed = EdAPI()
     ed.login()
@@ -508,6 +527,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--id_field",
+        help="If multiple courses, specify which course forum to post to",
+        default="draft_course_id",
+    )
     subparsers = parser.add_subparsers(dest="type")
     subparsers.required = True
 
