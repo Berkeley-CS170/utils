@@ -1,0 +1,54 @@
+- sem: Spring 2024
+  exam_link: https://drive.google.com/file/d/1R9HD53GzR2cMM8sibtfX3hbJqf8tOjJM/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1UbB7rbKqhUseBp3091SR218bwdAdaXXz/view?usp=sharing 
+  video_link: 
+  clarifications:
+- sem: Fall 2023
+  exam_link: https://drive.google.com/file/d/1ZQYP_w732GEyXTOb9-XAGTWtcvL7WS-F/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1bpq_ZbbGa8gQCmCQO06fvXHlUYHPiBk4/view?usp=sharing
+  video_link: https://www.youtube.com/playlist?list=PLQf-D2zH1-emtgqbHm6gV1TFyhIdS2tGy 
+  clarifications:
+- sem: Spring 2023
+  exam_link: https://drive.google.com/file/d/1vWBTm2-RepLrp2LhenOt6HGwHjkYQqI7/view?usp=drive_link 
+  sol_link: https://drive.google.com/file/d/15vAUbSuEX9Q4sOXkxoRHP-7oD9hX8YAq/view 
+  video_link: 
+  clarifications:
+    - "Q3.1: DFS starts on the first node alphabetically which hasn't been visited yet"
+    - "Q3.1: Pre and post numbers are one-indexed"
+    - "Q12: Assume the graph is connected"
+- sem: Fall 2022
+  exam_link: https://drive.google.com/file/d/1Vz-ox-xiOYoabBfg35Ny-qFmAXBWLumw/view?usp=drive_link 
+  sol_link: https://static.us.edusercontent.com/files/tlvdKzZMZrEKQ126z1Y5wOkd 
+  video_link: 
+  clarifications: 
+    - 'Q2.1: "distance to that vertex" means "distance from node C to that vertex"'
+    - 'Q4: the second to last sentence should read “Design an efficient algorithm to pair up the *pears* while minimizing the sum of distances between the *pears in each pair*, and prove its correctness using an exchange argument”'
+    - 'Q5: the first line should be $\omega(log n) < m < n$ or $\omega(\log n) < m < n$'
+    - 'A contiguous subarray is a subsequence without skipping any elements. For example `[b, c]` is a contiguous subarray of `[a, b, c, d]`, while `[a, c]` is not.'
+    - 'Q6: PNPenguin knows all of the $cab$ values beforehand. Furthermore, you may assume that all of the $cab$ values are non-negative. You can also assume that $cab = cba$.'
+    - 'Q7: new pairs of rooms that are connected means the number of pairs of rooms A, B such that A and B were not connected before the door was opened, but are connected after the door was opened.'
+    - 'Q9: there is no limit on the number of times you can swap a digit.'
+    - 'Q10: You do know who is a villager and who is a werewolf. You also know which room each player starts in.'
+    - "There is an alternate solution to Q8. You can split the deck into 'low numbers' from 1 to $n/2$ and 'high numbers' from $n/2 + 1$ to $n$, recurse on each half of the deck, and do one pass through the array where any time you see a high card, you add the number of low cards you've seen so far, and return the sum of this pass and the two recursive calls. The runtime is the same as the staff solution."
+- sem: Spring 2022
+  exam_link: https://drive.google.com/file/d/1dw1IneDc3Iy-PKcQQODbAC5qq8pawM9T/view?usp=sharing
+  sol_link: https://cdn-uploads.piazza.com/paste/j6nu4od8lks49s/96739ed63f4a17e2ffc8b6dc5cfdb66d544dbce2f83fea26963dcba282ec6a7f/cs170_sp2022_mt1_sol.pdf
+  video_link: https://drive.google.com/drive/folders/16F11KOMa5aQ-YYVyOs4Pq31y2uvS8xLn?usp=sharing
+  clarifications:
+    - "Q6d: 1, 1 is also a valid answer depending on the conventions used."
+- sem: Fall 2021
+  exam_link: https://drive.google.com/file/d/1dsH0dwQWCzwKC1gROH_Ge89zqhEfWu0s/view?usp=sharing
+  sol_link: https://piazza.com/redirect/s3?bucket=uploads&prefix=paste%2Fjktvhp62swi6at%2Fcaf8edc3ca10e6256e900ad5f17c7a5429639fd41dcc178ea3892abc0bdbc824%2FCS_170_Midterm_1_Solutions_Fall_2021.pdf
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/1FcefAH3RcLBHmU0G_rdA0qqPjpvdPTM3X3PU9wKXPvI/edit#heading=h.2ppl1dju60go
+  clarifications:
+    - 'Q1a: Taking $\log(n!) = \cap_{i=1}^n \log(i), \log(i) < log(n) \forall i < n$ is a correct alternate approach to obtain upper bound.'
+    - 'Q3: $O(m(m+n))$ solution qualifies for partial credit, but not much points.'
+    - 'Q4b: If you had the alternate solution of converting to -1, the threshold should be 0.8 instead of 0.9.'
+- sem: Spring 2021
+  exam_link: https://static.us.edusercontent.com/files/7pFggyIdMPKMVqgSQPrCt5Bc 
+  sol_link: https://cdn-uploads.piazza.com/paste%2Fjl3yd864dyk52v%2Ffbef7e3110180f6253c21c78dce5d82d22d395fd723f0b033fe9122e39c70bd3%2FCS_170_Midterm_1_Spring2021_solutions.pdf 
+  video_link: https://drive.google.com/drive/folders/1TeGNYdwcfoByAcZioK81-mgSoBF-9Hb1?usp=sharing
+  clarifications:
+    - "Q1b: The per-day exchange argument can receive partial credit."
+- sem: Fall 2020 and prior

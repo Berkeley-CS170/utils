@@ -1,0 +1,63 @@
+- sem: Spring 2024
+  exam_link: https://drive.google.com/file/d/1B-RbtQCsSRT25bjoXeZxX53oie6YCGMz/view
+  sol_link: https://drive.google.com/file/d/1FbrTasTz99vGxRKLyiB2hJHSY8wi6gCw/view
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/1Aptw253aAA5xzswTQlMLVdsLlIWaejwMX94d-aR8Cac/edit#heading=h.em8xew7rssnb
+  clarifications:
+
+- sem: Fall 2023
+  exam_link: https://drive.google.com/file/d/1IbBarwZ06CGwdOJJ36I5J_ClJsvcHuDl/view
+  sol_link: https://drive.google.com/file/d/1FbrTasTz99vGxRKLyiB2hJHSY8wi6gCw/view
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/1zMTC9BjXV4wcqj-SzvjnXomp5l4zk4ZGJEU4IIv6qys/edit
+  clarifications:
+
+- sem: Spring 2023
+  exam_link: https://drive.google.com/file/d/1sc9u-LNp5FruCtDJSTW8216kHAhU105g/view
+  sol_link: https://drive.google.com/file/d/1sc9u-LNp5FruCtDJSTW8216kHAhU105g/view
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/1TcEseUuO1ry_x6h23zh0MpoAIfZ96QSiGTJg8HbCW24/edit#heading=h.tce896yg0n0s
+  clarifications:
+
+- sem: Fall 2022
+  exam_link: https://drive.google.com/file/d/1TteMJD-LqHJ8a555R_xa9kZgbblLLT9d/view
+  sol_link: https://drive.google.com/file/d/1hcIEdfuygDKor0Yuu6AHLim7aIv_duoI/view
+  video_link: 
+  clarifications:
+    - "For all questions: Only describe the parts (algo, proof, runtime) that the question explicitly asks for, i.e. if the question does not explicitly mention a proof or runtime is needed, you do NOT need to provide one."
+    - "1.4: you can assume that the losses are in [0, 1]"
+    - "2.3: ties are broken alphabetically"
+    - "4: you are allowed to write the LP in any form. The canonical form is below."
+    - "4: the constraint written as a,b,c should be x,y,z."
+    - "6: You are also given k. You also know which island is Hawaii and which one is Guinland."
+    - "7: the robber can't take an item multiple times (i.e., no replacement). You can also assume the weights of each item are integers."
+    - "8.1: use w(0)=[1,1,1],l(0)=[1/2,2/3,0] and l(1)=[1/2,1/3,1]. The indices on the exam paper are off by 1. The third iteration corresponds to picking probabilities based on weights in w(2)."
+    - "8.2: 'wrong' means chose a non-winning action. Solution to 8 might have a wording problem. After rereading, it seems that the weight sum of correct experts is at most 1/2, as under the assumption that Param lost, it otherwise would not choose that action."
+
+- sem: Spring 2022
+  exam_link: https://drive.google.com/file/d/1eKtig8VQo_7xznwF3ag77MGRUn_IaZUI/view
+  sol_link: https://cdn-uploads.piazza.com/paste/jktvhwn369f6ik/0c25f1f433463ae8061f970e33f6e6b71170629071d0da5d0699aabb3e0ba16f/CS_170_Spring_2022_Midterm_2_(2).pdf
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/1eYw67TZB1-vdI4UYKHQ6HUjJt5xrw1ezjkxFu4uU3dk/edit
+  clarifications:
+    - "Q2iii solution is corrected as a=0, b=0.5, c=0.5."
+    - "Q3 solution is incorrect, should be X=2 by comparing columns 1 and 3."
+    - "Q4b x1+x2+x3=0 should be x1+x2+x3=1."
+    - "Q7 has a typo in the solution, it should be u+1 to v not v+1 to u."
+    - "Q9b has a typo in case 2 of the recurrence for F(u,i). It should read: there's a typo in case 2 of the recurrence for F(u,i)F(u,i). It should read: F(u,1)=W[u,uL​]+W[u,uR​]+min⁡a,b∈1,…,k​{F(uL​,a)+F(uR​,b)}F(u,1)=W[u,uL​​]+W[u,uR​​]+mina,b∈1,…,k​​{F(uL​​,a)+F(uR​​,b)} F(u,i)=min⁡{F(uR​,i−1)+F(uL​,a)+W[u,uL​]∀a≤k−1F(uL​,i−1)+F(uR​,a)+W[u,uR​]∀a≤k−1F(uL​,a)+F(uR​,i−a−1)∀a≤i−1F(u,i)=min⎩ ⎨ ⎧​F(uR​​,i−1)+F(uL​​,a)+W[u,uL​​]F(uL​​,i−1)+F(uR​​,a)+W[u,uR​​]F(uL​​,a)+F(uR​​,i−a−1)​∀a≤k−1∀a≤k−1∀a≤i−1​."
+
+- sem: Fall 2021
+  exam_link: https://drive.google.com/file/d/1XIY9y_aCD5FG9xxzfUbgczmSz4uRaBB7/view
+  sol_link: https://cdn-uploads.piazza.com/paste/jktvhwn369f6ik/b6865693eb5d96965ffa54f3a91ec86d0d23659b0e4a98e186fc3211c9fe4be1/CS_170_Midterm_2_Fall_2021__REMOTE__%281%29.pdf
+  video_link: 
+  common_mistakes: https://docs.google.com/document/d/17Ak87Ra1wAoEgfybHjXynzt2Psws4nzlMVk3H081Py4/edit#heading=h.2ppl1dju60go
+  clarifications:
+    - "Q6 (game): LP formulation may not be needed."
+    - "Q7 (nice): The original rubric requires (mod P) to be included in the recurrence relations for full credit."
+    - "Grade will be amended if you received penalty. Grade only goes up."
+
+- sem: Spring 2021 and prior
+  exam_link: https://drive.google.com/drive/u/1/folders/1O3fPLCuDJlLLBmMVwqzz6aJFY4gTYmYi
+  sol_link: https://drive.google.com/drive/u/1/folders/1jnhTAl-8SXHANs_BrsOZW-iqQzRdrlRo
+  video_link: 
+  clarifications:

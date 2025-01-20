@@ -28,8 +28,10 @@ import json
 import os
 import datetime
 from dataclasses import dataclass
-from typing import Optional
-from bs4 import BeautifulSoup
+from typing import Optional, Union
+import re
+from ruamel.yaml import YAML
+from bs4 import BeautifulSoup, Tag
 
 from edapi import EdAPI
 from edapi.constants import ThreadType
@@ -48,6 +50,7 @@ class Config:
     course_id: int
     index_thread_num: Optional[int]
     overleaf_url: Optional[str]
+    lectures_path: Optional[str]
 
     def copy(self) -> "Config":
         """Make a copy of the current configuration."""
@@ -63,11 +66,13 @@ class Config:
             index_thread_num = int(index_thread_num)
 
         overleaf_url = obj.get("overleaf_link", None)
+        lectures_path = obj.get("lectures_path", None)
 
         return Config(
             course_id=int(obj[id_field]),
             index_thread_num=index_thread_num,
-            overleaf_url=overleaf_url
+            overleaf_url=overleaf_url,
+            lectures_path=lectures_path,
         )
 
     def as_json(self) -> dict:
@@ -95,6 +100,144 @@ def get_hw_template_zip(hw_num: str):
 
 
 # ========== Ed post helpers ==========
+
+def parse_template(template: list[Union[str, ed_templates.Link, ed_templates.H2]]) -> tuple[BeautifulSoup, Tag]:
+    """
+    Parse a template into a BeautifulSoup document.
+    """
+    post_soup, document = new_document()
+    for par in template:
+        paragraph = post_soup.new_tag("paragraph")
+        if isinstance(par, list):
+            for item in par:
+                if isinstance(item, str):
+                    paragraph.append(item)
+                elif isinstance(item, ed_templates.Link):
+                    link_tag = post_soup.new_tag("link", href=item.href)
+                    link_tag.string = item.text
+                    paragraph.append(link_tag)
+            document.append(paragraph)
+        elif isinstance(par, ed_templates.H2):
+            if paragraph.string:
+                document.append(paragraph)
+            h2_tag = post_soup.new_tag("heading", level=2)
+            h2_tag.string = par.text
+            document.append(h2_tag)
+        else:
+            paragraph.string = par
+            document.append(paragraph)
+    return post_soup, document
+
+def post_exam(ed: EdAPI, config: Config, exam_name: str):
+    """
+    Post past midterm/final exam question threads.
+    """
+    exam_names_long = dict(
+        mt1="Midterm 1",
+        mt2="Midterm 2",
+        final="Final",
+    )
+    assert exam_name in exam_names_long, f"Invalid exam name: {exam_name}"
+    exam_name_fmt = exam_names_long[exam_name]
+
+    summary = []
+
+    yaml = YAML()
+    with open(f"./{exam_name}.yml", "r") as f:
+        exam_data = yaml.load(f)
+    
+    for entry in reversed(exam_data):
+        sem = entry["sem"]
+        # create post body
+        template = ed_templates.SINGLE_EXAM_TEMPLATE(sem, exam_name_fmt)
+        post_soup, document = parse_template(template)
+
+        links_paragraph = post_soup.new_tag("paragraph")
+        links_paragraph.string = "Links: "
+        field_to_text = {
+            "exam_link": "Blank",
+            "sol_link": "Solutions",
+            "video_link": "Video Walkthrough",
+            "common_mistakes": "Common Mistakes Doc",
+        }
+        has_field = False
+        for field, text in field_to_text.items():
+            link = entry.get(field, None)
+            if link is not None:
+                if has_field:
+                    links_paragraph.append(", ")
+                link_tag = post_soup.new_tag("link", href=link)
+                link_tag.string = text
+                links_paragraph.append(link_tag)
+                has_field = True
+        document.append(links_paragraph)
+
+        clarifications_hdr = post_soup.new_tag("heading", level=2)
+        clarifications_hdr.string = "Clarifications/Notes/Errata"
+
+        clarifications_paragraph = post_soup.new_tag("list")
+        for bullet in (entry.get("clarifications", "") or "").split("\n"):
+            if not bullet:
+                continue
+            bullet_tag = post_soup.new_tag("list-item")
+            bullet_tag.string = bullet
+            clarifications_paragraph.append(bullet_tag)
+        if clarifications_paragraph.contents:
+            document.append(clarifications_hdr)
+            document.append(clarifications_paragraph)
+
+        result = ed.post_thread(
+            config.course_id,
+            {
+                "type": ThreadType.POST,
+                "title": f"{sem} {exam_name_fmt} Thread",
+                "category": "Exam",
+                "subcategory": exam_name_fmt,
+                "subsubcategory": "",
+                "content": str(document),
+                "is_pinned": False,
+                "is_private": False,
+                "is_anonymous": False,
+                "is_megathread": True,
+                "anonymous_comments": True,
+            },
+        )
+        print(
+            f"[{sem} {exam_name}] Posted thread for {exam_name_fmt}: #{result['number']}" 
+        )
+        summary.append(f"{sem} {exam_name_fmt} (#{result['number']})")
+
+    template = ed_templates.EXAM_MEGATHREAD_TEMPLATE(exam_name_fmt)
+    post_soup, document = parse_template(template)
+
+    question_list = post_soup.new_tag("list")
+    question_list.attrs["style"] = "bullet"
+    for question_content in reversed(summary):
+        question_item = post_soup.new_tag("list-item")
+        question_paragraph = post_soup.new_tag("paragraph")
+        question_paragraph.append(question_content)
+        question_item.append(question_paragraph)
+        question_list.append(question_item)
+    document.append(question_list)
+
+    template_result = ed.post_thread(
+        config.course_id,
+        {
+            "type": ThreadType.POST,
+            "title": f"Past {exam_name_fmt} Megathread",
+            "category": "Exam",
+            "subcategory": exam_name_fmt,
+            "subsubcategory": "",
+            "content": str(document),
+            "is_pinned": True,
+            "is_private": False,
+            "is_anonymous": False,
+            "is_megathread": True,
+            "anonymous_comments": True,
+        },
+    )
+    print(f"Posted megathread for {exam_name_fmt}: #{template_result['number']}")
+    summary.append(f"{exam_name_fmt} Megathread (#{template_result['number']})")
 
 
 def post_hw(ed: EdAPI, config: Config, hw_num: str):
@@ -181,22 +324,12 @@ def post_hw(ed: EdAPI, config: Config, hw_num: str):
     print("Shareable Overleaf link:", student_link)
 
     # create post body
-    post_soup, document = new_document()
-
-    main_paragraph = post_soup.new_tag("paragraph")
-    next_friday = datetime.datetime.now() + datetime.timedelta(
+    next_friday = (datetime.datetime.now() + datetime.timedelta(
         days=(4 - datetime.datetime.now().weekday()) % 7
-    )
-    main_paragraph.string = f"""Hi all,
-Homework {str(int(hw_num_fmt))} has been posted to the """
-    pdf_link = post_soup.new_tag("link", href=f"https://cs170.org/assets/pdf/hw{hw_num}.pdf")
-    pdf_link.string = "course website"
-    main_paragraph.append(pdf_link)
-    main_paragraph.append(f""". It is due next on Friday ({next_friday.strftime(r"%m/%d")}) at 10:00pm, with a grace period until 11:59pm.
-
-Any general questions about the homework should be posted in this thread, and questions about specific problems should be posted under the individual threads:
-""" )
-    document.append(main_paragraph)
+    )).strftime(r"%m/%d")
+    
+    template = ed_templates.HW_TEMPLATE(hw_num_fmt, next_friday)
+    post_soup, document = parse_template(template)
 
     question_list = post_soup.new_tag("list")
     question_list.attrs["style"] = "bullet"
@@ -215,8 +348,6 @@ Any general questions about the homework should be posted in this thread, and qu
     link_link.string = student_link
     link_paragraph.append(link_link)
     document.append(link_paragraph)
-
-    print(document)
 
     # zip_paragraph = post_soup.new_tag("paragraph")
     # zip_paragraph.string = "Source files:"
@@ -244,10 +375,10 @@ Any general questions about the homework should be posted in this thread, and qu
         },
     )
     print(f"Posted template for HW{hw_num_fmt}: #{template_result['number']}")
+    print(f"https://edstem.org/us/courses/{template_result['course_id']}/discussion/{template_result['id']}")
     summary.append(f"LaTeX Template (#{template_result['number']})")
 
     # Update summary
-
     course_id = config.course_id
     hw_dis_post_num = config.index_thread_num
     hw_dis_post = ed.get_course_thread(course_id, hw_dis_post_num)
@@ -255,28 +386,31 @@ Any general questions about the homework should be posted in this thread, and qu
 
     last_content = hw_dis_post["content"]
     soup, document = parse_content(last_content)
-    # hw list is first, dis list is second
-    hw_list = document.find_all("list", recursive=False)[0]
+    hw_list = document.find(string=lambda s: s.startswith("Homework Thread")).parent.parent.find("list")
 
-    hw_summary = soup.new_tag("list-item")
-    hw_summary_heading = soup.new_tag("paragraph")
-    hw_summary_heading.string = f"Homework {hw_num_fmt}"
-    hw_summary.append(hw_summary_heading)
-
-    question_list = soup.new_tag("list")
-    question_list.attrs["style"] = "bullet"
-    for question_content in summary:
-        question_item = soup.new_tag("list-item")
-        question_paragraph = soup.new_tag("paragraph")
-        question_paragraph.append(question_content)
-        question_item.append(question_paragraph)
-        question_list.append(question_item)
-    hw_summary.append(question_list)
-
-    hw_list.append(hw_summary)
+    hw_item = soup.new_tag("list-item")
+    hw_item_paragraph = soup.new_tag("paragraph")
+    hw_item_paragraph.string = (
+        f"Homework {str(int(hw_num_fmt))}: #{template_result['number']}"
+    )
+    hw_item.append(hw_item_paragraph)
+    hw_list.append(hw_item)
 
     ed.edit_thread(hw_dis_post_id, {"content": str(document)})
     print("Updated Index Thread")
+
+    # unpin old threads
+    for row in hw_list.find_all("list-item"):
+        res = re.search(r"#\d+", row.text)
+        if res is not None:
+            old_thread_num = int(res.group()[1:])
+            if old_thread_num == template_result["number"]:
+                continue
+            old_thread = ed.get_course_thread(config.course_id, old_thread_num)
+            if old_thread and old_thread.get("is_pinned", False):
+                old_thread_id = old_thread["id"]
+                ed.edit_thread(old_thread_id, {"is_pinned": False})
+                print(f"Unpinned old HW thread: #{old_thread_num}")
 
 
 def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
@@ -288,46 +422,8 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
     dis_num_fmt = int(dis_num)
 
     # create post body
-    discussion_soup, document = new_document()
     template = ed_templates.DIS_TEMPLATE(dis_num_fmt)
-    for par in template:
-        dis_paragraph = par
-        document.append(dis_paragraph)
-
-    print(document)
-    # discussion_soup, document = new_document()
-    # dis_a_paragraph = discussion_soup.new_tag("paragraph")
-    # dis_a_paragraph.string = f"Discussion {dis_num_fmt}a: "
-    # dis_a_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}a.pdf"
-    # dis_a_link = discussion_soup.new_tag("link", href=dis_a_text)
-    # dis_a_link.string = dis_a_text
-    # dis_a_paragraph.append(dis_a_link)
-    # document.append(dis_a_paragraph)
-
-    # dis_b_paragraph = discussion_soup.new_tag("paragraph")
-    # dis_b_paragraph.string = f"Discussion {dis_num_fmt}b: "
-    # dis_b_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}b.pdf"
-    # dis_b_link = discussion_soup.new_tag("link", href=dis_b_text)
-    # dis_b_link.string = dis_b_text
-    # dis_b_paragraph.append(dis_b_link)
-    # document.append(dis_b_paragraph)
-
-    # if is_summer:
-    #     dis_c_paragraph = discussion_soup.new_tag("paragraph")
-    #     dis_c_paragraph.string = f"Discussion {dis_num_fmt}c: "
-    #     dis_c_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}c.pdf"
-    #     dis_c_link = discussion_soup.new_tag("link", href=dis_c_text)
-    #     dis_c_link.string = dis_c_text
-    #     dis_c_paragraph.append(dis_c_link)
-    #     document.append(dis_c_paragraph)
-
-    #     dis_d_paragraph = discussion_soup.new_tag("paragraph")
-    #     dis_d_paragraph.string = f"Discussion {dis_num_fmt}d: "
-    #     dis_d_text = f"https://www.eecs70.org/assets/pdf/dis{dis_num}d.pdf"
-    #     dis_d_link = discussion_soup.new_tag("link", href=dis_d_text)
-    #     dis_d_link.string = dis_d_text
-    #     dis_d_paragraph.append(dis_d_link)
-    #     document.append(dis_d_paragraph)
+    discussion_soup, document = parse_template(template)
 
     # post thread
     dis_post_result = ed.post_thread(
@@ -339,7 +435,7 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
             "subcategory": "",
             "subsubcategory": "",
             "content": str(document),
-            "is_pinned": False,
+            "is_pinned": True,
             "is_private": False,
             "is_anonymous": False,
             "is_megathread": True,
@@ -347,10 +443,6 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
         },
     )
     print(f"Posted discussion {dis_num_fmt}: #{dis_post_result['number']}")
-    # if is_summer:
-    #     print(f"Posted discussion {dis_num_fmt}a/b/c/d: #{dis_post_result['number']}")
-    # else:
-    #     print(f"Posted discussion {dis_num_fmt}a/b: #{dis_post_result['number']}")
 
     # update summary
     hw_dis_post_num = config.index_thread_num
@@ -359,25 +451,119 @@ def post_dis(ed: EdAPI, config: Config, dis_num: str, is_summer: bool):
 
     last_content = hw_dis_post["content"]
     soup, document = parse_content(last_content)
-    # hw list is first, dis list is second
-    dis_list = document.find_all("list", recursive=False)[1]
+    dis_list = document.find(string="Discussion Threads:", recursive=True).parent.parent.find("list")
 
     dis_item = soup.new_tag("list-item")
     dis_item_paragraph = soup.new_tag("paragraph")
-    if is_summer:
-        dis_item_paragraph.string = (
-            f"Discussion {dis_num_fmt}a, {dis_num_fmt}b, {dis_num_fmt}c, {dis_num_fmt}d"
-            f" (#{dis_post_result['number']})"
-        )
-    else:
-        dis_item_paragraph.string = (
-            f"Discussion {dis_num_fmt}a, {dis_num_fmt}b (#{dis_post_result['number']})"
-        )
+    dis_item_paragraph.string = (
+        f"Discussion {dis_num_fmt}: #{dis_post_result['number']}"
+    )
     dis_item.append(dis_item_paragraph)
     dis_list.append(dis_item)
 
     ed.edit_thread(hw_dis_post_id, {"content": str(document)})
     print("Updated Index Thread")
+
+    # unpin old threads
+    for row in dis_list.find_all("list-item"):
+        res = re.search(r"#\d+", row.text)
+        if res is not None:
+            old_thread_num = int(res.group()[1:])
+            if old_thread_num == dis_post_result["number"]:
+                continue
+            old_thread = ed.get_course_thread(config.course_id, old_thread_num)
+            if old_thread and old_thread.get("is_pinned", False):
+                old_thread_id = old_thread["id"]
+                ed.edit_thread(old_thread_id, {"is_pinned": False})
+                print(f"Unpinned old discussion thread: #{old_thread_num}")
+
+def post_lec(ed: EdAPI, config: Config, week_num: str):
+    """
+    Post discussion thread and update the homework/discussion index.
+    """
+    assert config.index_thread_num is not None, "Index thread number must be provided."
+
+    week_num_fmt = int(week_num)
+
+    # create post body
+    # read weeks.yml and get the lec topics for this week
+    lecs_path = config.lectures_path
+
+    topics = []
+    yaml = YAML()
+    with open(lecs_path, "r") as f:
+        lecs = yaml.load(f)
+
+    for lec in lecs:
+        if int(lec["week"]) == week_num_fmt:
+            # skip malformed lectures, holidays, and midterms
+            if "title" not in lec:
+                continue
+            if "holiday" in lec:
+                continue
+            title = lec["title"]
+            if "midterm" in title.lower():
+                continue
+            if "no lecture" in title.lower():
+                continue
+            topics.append(title)
+
+    topics_fmt = ", ".join(topics)
+
+    template = ed_templates.LEC_TEMPLATE(topics_fmt)
+    lec_soup, document = parse_template(template)
+
+    # post thread
+    lec_post_result = ed.post_thread(
+        config.course_id,
+        {
+            "type": ThreadType.POST,
+            "title": f"Week {week_num_fmt} Lecture Thread",
+            "category": "Lecture",
+            "subcategory": "",
+            "subsubcategory": "",
+            "content": str(document),
+            "is_pinned": True,
+            "is_private": False,
+            "is_anonymous": False,
+            "is_megathread": True,
+            "anonymous_comments": True,
+        },
+    )
+    print(f"Posted week {week_num_fmt} lec thread: #{lec_post_result['number']}")
+
+    # update summary
+    hw_dis_post_num = config.index_thread_num
+    hw_dis_post = ed.get_course_thread(config.course_id, hw_dis_post_num)
+    hw_dis_post_id = hw_dis_post["id"]
+
+    last_content = hw_dis_post["content"]
+    soup, document = parse_content(last_content)
+    lec_list = document.find(string="Weekly Lecture Threads:", recursive=True).parent.parent.find("list")
+
+    lec_item = soup.new_tag("list-item")
+    lec_item_paragraph = soup.new_tag("paragraph")
+    lec_item_paragraph.string = (
+        f"Week {week_num} ({topics_fmt}): #{lec_post_result['number']}"
+    )
+    lec_item.append(lec_item_paragraph)
+    lec_list.append(lec_item)
+
+    ed.edit_thread(hw_dis_post_id, {"content": str(document)})
+    print("Updated Index Thread")
+
+    # unpin old threads
+    for row in lec_list.find_all("list-item"):
+        res = re.search(r"#\d+", row.text)
+        if res is not None:
+            old_thread_num = int(res.group()[1:])
+            if old_thread_num == lec_post_result["number"]:
+                continue
+            old_thread = ed.get_course_thread(config.course_id, old_thread_num)
+            if old_thread and old_thread.get("is_pinned", False):
+                old_thread_id = old_thread["id"]
+                ed.edit_thread(old_thread_id, {"is_pinned": False})
+                print(f"Unpinned old lecture thread: #{old_thread_num}")
 
 
 def post_note(ed: EdAPI, config: Config, note_num: str):
@@ -519,6 +705,10 @@ def main(args):
         post_dis(ed, config, args.num, args.summer)
     elif args.type == "note":
         post_note(ed, config, args.num)
+    elif args.type == "lec":
+        post_lec(ed, config, args.num)
+    elif args.type == "exam":
+        post_exam(ed, config, args.exam)
     elif args.type == "init-index":
         init_index(ed, config)
 
@@ -537,12 +727,16 @@ if __name__ == "__main__":
 
     hw_parser = subparsers.add_parser("hw")
     dis_parser = subparsers.add_parser("dis")
+    exam_parser = subparsers.add_parser("exam")
+    lec_parser = subparsers.add_parser("lec")
     note_parser = subparsers.add_parser("note")
     init_parser = subparsers.add_parser("init-index")
 
     # add "num" argument to hw/dis/note parsers
-    for p in (hw_parser, dis_parser, note_parser):
-        p.add_argument("num", help="HW/discussion/note number")
+    for p in (hw_parser, dis_parser, note_parser, lec_parser):
+        p.add_argument("num", help="HW/discussion/note/week number")
+
+    exam_parser.add_argument("exam", help="Exam name (mt1, mt2, final)")
 
     # optional summer flag for discussions
     dis_parser.add_argument(

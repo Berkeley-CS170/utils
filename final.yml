@@ -1,0 +1,175 @@
+- sem: Spring 2024
+  exam_link: https://drive.google.com/file/d/1h3J5kHxGWf6siSoHX9TKqB9U6SIHnyLZ/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1Lja3WOFL8qjmkTaT9i5KWHPvbRNlbK4W/view?usp=sharing
+  video_link: 
+  common_mistakes: 
+  clarifications: 
+
+- sem: Fall 2023
+  exam_link: https://drive.google.com/file/d/1H4ELPccYvs1b8hYw_MZfWZwRzobNo0rj/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1PdlPlt7nfwEvalET30DNAIO6fXLxEnZK/view?usp=sharing
+  video_link: 
+  common_mistakes: 
+  clarifications: 
+
+- sem: Spring 2023
+  exam_link: https://drive.google.com/file/d/1_EAOmHgj7NtTY2HpZ9cq9zvIqJ8-k3zk/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1MZi-HbYOOfls_4ENSRwfzZfH6mNbGeDl/view?usp=sharing
+  video_link: 
+  common_mistakes: 
+  clarifications: |
+    Q5.1 many answers had 4 included twice. This is not possible since both 4’s will be put in the same partition; thus, it cannot be picked as a pivot twice.
+
+    Q10 Not specifying how a cycle is found. You need to explicitly state the use of DFS to find a back edge as has been the precedent in this class, rather than blackboxing a cycle detection algorithm.
+
+    Q10 Simply running Kruskal’s/Prim’s and outputting an edge not in the returned MST is not a valid solution, since it is too slow. Although there’s a unique MST due to the graph having unique weights, we require a runtime of O(V) not O(ElogV).
+
+    Q10 Stating O(|V| + |E|) or “linear” for DFS runtime is not a valid runtime solution as the question explicitly asks for a justification of O(|V|).
+
+    Q11a Solutions along the lines of running dijkstra’s to find the shortest s-t path then subtracting the longest edge does not work.     Q11b Many solutions follow the form: maintain a separate array f[x] = the longest edge from s to x. When you take the edge (u,v) to visit the node v, compute dist[v] = dist[u] + w(u,v) - f[x]. This solution fails on the above example for the same reason. Node t will be visited before node v; therefore dist[t] will be set to 2. 
+
+    Q11c Note: Dijkstra’s works and runs in O(ElogV) because the first time it visits a vertex, it’s guaranteed that the correct distance will have been computed. Therefore, you never have to check its distance again. Thus, you cannot modify Dijkstra’s to visit a node repeatedly without proving that this new algorithm works and its runtime doesn’t change.
+
+    Q14a Strict inequalities are not allowed in LP constraints. Note that if we want to approximate something like a+b+c < 3, practice we can often choose a small number  and write the constraint a+b+c  3 -
+
+- sem: Fall 2022
+  exam_link: https://static.us.edusercontent.com/files/r9wevA9vG5WlpJbuIb7L56DS
+  sol_link:  (strike semester)
+  video_link: 
+  common_mistakes: 
+  clarifications: 
+
+- sem: Spring 2022
+  exam_link: https://drive.google.com/file/d/1SIMllzAsk8pvru-de4BLhvGRRPhmHwdi/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1mngIp8mZjfym-i_MW_RxxGN1C4j5Isiu/view?usp=sharing
+  video_link: 
+  common_mistakes: 
+  clarifications: |
+    Question 11.4 had a bug - the intention of the question was to say that hint one towards directing all tree edges downwards, and every other edge upward; however, this couldn’t be done with only the local pre/post numbers, so we gave full credit to everyone for 11.4 and 11.5.
+
+    Solutions of C*(n-1)/n Question 6.1 should receive 2.0/2.0 pts, and the problem has been regraded. 
+
+    For 12.2.2's main approach, writing that the sum of the variables is greater than or equal to 24 will now get full credit. Please submit a regrade request if this applies to you.
+
+    For 15.2, solutions that write a solution for matching will now get full credit. Please submit a regrade request if this applies to you.
+
+- sem: Fall 2021
+  exam_link: https://drive.google.com/file/d/1JEUA_DeCvJ1xSRBmWd4Gh9HXO6nxG_M7/view?usp=sharing
+  sol_link: https://drive.google.com/file/d/1ZE-TAvEs5ioiAd1_9eQhKZbbejothz53/view?usp=sharing
+  video_link: 
+  common_mistakes: 
+  clarifications: |
+    2b. If you see the printing error “3x | 4” on 2(b), it’s supposed to be “3x + 4”.
+    4. “Come up with an algorithm” means write the algorithm description
+    5. You do not have to visit all vertices, and there is no ordering on the vertices; you are only finding how to get from s to t under constraints on transportation methods. Assume there is at least one valid path from s to t in the graph.
+    6. Make no assumptions on if the {d_k}s are less than {p_i}s or not. This is shown in the example.
+    7a. You only need to prove the reduction provided is indeed valid. Do not add any clauses or modify the reduction at all.
+    0 means false; a 3-CNF formula has exactly 3 variables per clause.
+    8b x_i is the ith entry of x* and p_i is the corresponding probability.
+    Assume every element is covered by a set.
+    “no element is contained in more than k sets” only pertains to part (a)
+    8c “Show that if” should be “Show that” (remove “if”)
+
+- sem: Spring 2021 and prior
+  exam_link: https://drive.google.com/drive/u/1/folders/1zin7QLUWaeNLFkFphiD5ZavJS1CxIF6W
+  sol_link: https://drive.google.com/drive/u/1/folders/1zin7QLUWaeNLFkFphiD5ZavJS1CxIF6W
+  video_link: 
+  common_mistakes: 
+  clarifications: |
+    1c: GR refers to the graph where the edges are reversed or the 'reverse graph'
+    1g: ""from 1,⋯,24 to itself"" means that the input and output of both functions are always integers between 1 and 24, inclusive
+    2a: You must return the SCCs one by one in topological order, id est you cannot simply hold the outputs and return them in reverse order
+    2d: The losses are chosen ahaed of time means we know all the losses prior to picking experts
+    3: The coolness of an employee can be negative
+    4: The RHP instance in problem 4 does NOT include a start vertex and an end vertex. In other words, the Rudrata Path can start and end on any two distince vertices.
+    The RHP and RHC problems in Q4 are decision problems, in other words, you only need to decide (output yes/no) whether an RHP/RHC exists in G or not
+    For (a) and (b), you do not need to analyse the runtime of your reductions.
+    6: T is undirected
+    6b: ""Your greedy algorithm"" refers to the algorithm you described in (a), without any modifications to incorporate rewards.
+
+
+    Edit note:
+    2c: Solution has typo. Should be Ω(∣E∣) instead of Θ(∣E∣). FA20: Short Answer (Q2)
+
+
+    For part c, answers showing a counterexample for fixed m received full credit.
+    LP+Dijkstra Alternative to Bellman Ford (Q4)
+
+
+    For part b, the following alternative solution was proposed by a student and accepted for full credit:
+
+
+    ""if there was a negative cycle in the original graph G, then there would exist a shortest path (say from vertex s to vertex t) that used this negative cycle an infinite number of times to keep minimizing the path length. However, by part a, shortest paths are preserved, so the shortest path in the new graph G′ would be the same (including all the cycles). However since all w′ij are nonnegative we could reduce the path length by just traversing the cycle once instead of an infinite number of times, so shortest paths aren’t preserved, hence creating a contradiction.""
+
+
+    For part c, full credit submissions could not have absolute values in the final answer (they are not linear).
+    Small Vertex Cover (Q5)
+
+
+    For part b, several other base cases can work, including using k = 0 and checking if an edge exists or not.
+
+
+    https://www.cs.princeton.edu/~wayne/kleinberg-tardos/pdf/10ExtendingTractability-2x2.pdf
+
+
+    In addition, for part b, an alternative solution proposed by a student and instructor would have worked:
+
+
+    ""Pick an arbitrary vertex v with positive degree.
+    You have two options:
+    1. either you pick this vertex and check VC(G-{v}, k-1)
+    2. or you don't pick v, but then you have to pick all its neighbors N(v), so you check VC(G-{v}-N(v), k-|N(v)|).
+    The answer is true iff any of the two recursive calls is true.""
+    Is-Different (Q6)
+
+
+    For part a, several students had a question about what it meant for IS-Different to be NP.
+
+
+    From instructor responses:
+
+
+    'NP is defined (check chapter 8 of the textbook) as ""any proposed solution can be deterministically verified in polynomial time"".'
+
+
+    ""A decision problem is in NP if there is some algorithm such that: -Given an instance where the answer is Yes, there is some “witness” we can give to the algorithm that makes it output Yes. -Given an instance where the answer is No, every “witness” causes the algorithm to output No.
+
+
+    So here, a witness would be an assignment of variables, and the algorithm checks if the given assignment makes the formulas not equal. If the answer to Is Different is yes, then there is some assignment of variables which makes them differ, which satisfies the above definition. Also when the answer is No, then every assignment doesn’t make them differ, so the algorithm can never be forced to output Yes.
+
+
+    When we are concerned with witnesses for the answer being No, this is called co-NP (and if we want a witness for both, this is NP ∩ co-NP).""
+
+
+    For part b, reducing Is-Different to 3-SAT was incorrect since we cannot draw any conclusions about the complexity of Is-Different (we can reduce a P problem to a NPC problem regardless of if P=NP or P!=NP).
+
+
+    A common misconception about IsDifferent stated by an instructor from that iteration:
+
+
+    ""they thought IsDifferent ask whether SAT(ϕ1)≠SAT(ϕ2), i.e. ∃x,y s.t. ϕ1(x)≠ϕ2(y), but what it actually asks for is whether ∃x s.t. ϕ1(x)≠ϕ2(x), i.e. you have to pass in the SAME assignment of variables to both formulas and test difference."" FA19: scc (q1)
+
+
+    q1.3: Putting EHJ after F is valid. The solution key is not correct, a valid topo ordering could be A, JHE, F, BCG, D.
+    median (q3)
+
+
+    q3.2: Answer is not unique. For example, 1,9,2,8,3,7,4,6,5 is also valid.
+    q3.2: For Fall 2019 the median finding algorithm covered doesn't pick pivot for length-1 base case, so omitting 5 doesn't lose any point.
+    truefalse (q12)
+
+
+    q12.7: By ""true or false"", both answers are awarded credit - but false is ""more correct"". (Note this semester you may be required to provide explanation)
+    logs (q18)
+
+
+    Reservoir sampling is not a valid solution.
+    mwi (q20)
+
+
+    Leaving ϵ with an otherwise correct answer is also correct.
+
+
+    q11: Only blue texts are accepted answer. Instructor reply back then: ""[t]he blue text is correct, the accepted solutions are 1−α1​ or 1−α1​−1. The note is (by mistake) discussing the original algorithm as in the notes, but the same logic applies.""
+    q12.2: Answer has typo, should be false.
+    q18: solution line 8 is wrong. "

@@ -17,7 +17,7 @@ before_text = r"""\documentclass[11pt,preview,border=0.5in]{standalone}
 after_text = r"""
 \end{document}"""
 
-def latex_to_images(assignment, output_folder):
+def latex_to_images(assignment, src_dir, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     os.makedirs(os.path.join(output_folder, f"hw{assignment:02d}"), exist_ok=True)
@@ -27,34 +27,22 @@ def latex_to_images(assignment, output_folder):
             with open(os.path.join(temp_dir, 'cs170.sty'), 'w') as f2:
                 f2.write(f.read())
 
-        make_templates.generate(assignment, temp_dir)
-        questions = parse_questions(os.path.join(temp_dir, f'hw{assignment:02d}.tex'))
+        make_templates.generate(assignment, src_dir, temp_dir)
+        questions = make_templates.parse_questions(os.path.join(temp_dir, f'hw{assignment:02d}.tex'))[2:]
+        print(f"Found {len(questions)} questions")
 
         for i, q in enumerate(questions, start=2):
             latex_file = os.path.join(temp_dir, f'q{i}.tex')
             with open(latex_file, 'w') as f:
                 f.write(before_text + r"\setcounter{section}{" + str(i-1) + '}\n' + q + after_text)
 
+            print(f"Converting question {i} to image")
             # Run pdflatex and save the output in the temporary directory
-            subprocess.run(['pdflatex', '-output-directory', temp_dir, latex_file])
+            subprocess.run(['pdflatex', '-interaction=batchmode', '-file-line-error', '-output-directory', temp_dir, latex_file])
 
             pdf_file = os.path.join(temp_dir, os.path.basename(latex_file).replace('.tex', '.pdf'))
 
             subprocess.run(['convert', '-density', '150', '-quality', '100', '-flatten', pdf_file, os.path.join(output_folder, f"hw{assignment:02d}", f'hw{assignment:02d}-img{i:02d}.png')])
-
-def parse_questions(tex_file):
-    questions = []
-    with open(tex_file, 'r') as f:
-        question = ''
-        for line in f:
-            if line.lstrip().startswith(r'\question'):
-                if question:
-                    questions.append(question)
-                question = line
-            else:
-                question += line
-        questions.append(question)
-    return questions[2:]
 
 if __name__ == "__main__":
     import argparse
@@ -66,9 +54,13 @@ if __name__ == "__main__":
         "assignment", help="Number for the assignment", type=int
     )
     parser.add_argument(
+        "src_dir",
+        help="Directory where the tex source files are located",
+    )
+    parser.add_argument(
         "output_folder",
         help="Path to the output folder"
     )
 
     args = parser.parse_args()
-    latex_to_images(args.assignment, args.output_folder)
+    latex_to_images(args.assignment, args.src_dir, args.output_folder)
